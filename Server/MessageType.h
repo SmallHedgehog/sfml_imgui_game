@@ -1,27 +1,27 @@
 #pragma once
 
-// ¶¨ÒåÏûÏ¢ÀàĞÍ
+// å®šä¹‰æ¶ˆæ¯ç±»å‹
 enum MessageType
 {
-	TYPE_SIGNIN,				// µÇÂ¼ÏûÏ¢ÀàĞÍ
-	TYPE_SIGNUP,				// ×¢²áÏûÏ¢ÀàĞÍ
-	TYPE_SIGNOUT,				// µÇ³öÏûÏ¢ÀàĞÍ
-	TYPE_USER,					// ÓÃ»§ÏûÏ¢ÀàĞÍ
-	TYPE_MATCH,					// Æ¥ÅäÏûÏ¢ÀàĞÍ
-	TYPE_FIGHT,					// ½»Õ½ÏûÏ¢ÀàĞÍ
+	TYPE_SIGNIN,				// ç™»å½•æ¶ˆæ¯ç±»å‹
+	TYPE_SIGNUP,				// æ³¨å†Œæ¶ˆæ¯ç±»å‹
+	TYPE_SIGNOUT,				// ç™»å‡ºæ¶ˆæ¯ç±»å‹
+	TYPE_USER,				// ç”¨æˆ·æ¶ˆæ¯ç±»å‹
+	TYPE_MATCH,				// åŒ¹é…æ¶ˆæ¯ç±»å‹
+	TYPE_FIGHT,				// äº¤æˆ˜æ¶ˆæ¯ç±»å‹
 	TYPE_NONE
 };
 
 
-// ¶¨ÒåÊı¾İÀàĞÍ
+// å®šä¹‰æ•°æ®ç±»å‹
 
 #define MAX_DATA_SIZE	128		// max data size
 
-/* Êı¾İ°üÍ·¶¨Òå */
+/* æ•°æ®åŒ…å¤´å®šä¹‰ */
 typedef struct data_header
 {
-	MessageType msgType;		// ÏûÏ¢ÀàĞÍ
-	unsigned int dataSize;		// Êı¾İ°üÖĞÕæÊµÊı¾İµÄ³¤¶È
+	MessageType msgType;		// æ¶ˆæ¯ç±»å‹
+	unsigned int dataSize;		// æ•°æ®åŒ…ä¸­çœŸå®æ•°æ®çš„é•¿åº¦
 
 	data_header& operator = (const data_header& _data)
 	{
@@ -34,11 +34,11 @@ typedef struct data_header
 	}
 }DATA_HEADER;
 
-/* Êı¾İ°üÀàĞÍ¶¨Òå */
+/* æ•°æ®åŒ…ç±»å‹å®šä¹‰ */
 typedef struct data_package
 {
-	DATA_HEADER dataHeader;		// Êı¾İ°üÍ·
-	char data[MAX_DATA_SIZE];	// ÕæÊµÊı¾İ
+	DATA_HEADER dataHeader;		// æ•°æ®åŒ…å¤´
+	char data[MAX_DATA_SIZE];	// çœŸå®æ•°æ®
 
 	data_package& operator = (const data_package& _data)
 	{
