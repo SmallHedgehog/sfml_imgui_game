@@ -11,15 +11,15 @@ class Timer
 {
 public:
 	Timer(std::function< void(bool)> _isComplete, std::function< void(int)> _callbackFunc):isTimerStart(false)
-										 { isComplete = _isComplete; callbackFunc = _callbackFunc; _start_time = std::clock(); }
-	~Timer()							 { Join(); }
-	inline double elapsed_min() const	 { return double(1) / double(CLOCKS_PER_SEC); }
-	inline double elapsed_max() const	 { return (double((std::numeric_limits<std::clock_t>::max)()) - double(_start_time)) / double(CLOCKS_PER_SEC); }
-	/* inline void start()				 { _start_time = std::clock(); } */
-	inline void restart()				 { _start_time = std::clock(); }
-	inline double elapsed() const		 { return double(std::clock() - _start_time) / CLOCKS_PER_SEC; }
-	inline std::clock_t elapsedl() const { return (std::clock() - _start_time); }
-	inline bool GetIsTimerEnd() const	 { return !isTimerStart; }
+						{ isComplete = _isComplete; callbackFunc = _callbackFunc; _start_time = std::clock(); }
+	~Timer()				{ Join(); }
+	inline double elapsed_min() const	{ return double(1) / double(CLOCKS_PER_SEC); }
+	inline double elapsed_max() const	{ return (double((std::numeric_limits<std::clock_t>::max)()) - double(_start_time)) / double(CLOCKS_PER_SEC); }
+	/* inline void start()			{ _start_time = std::clock(); } */
+	inline void restart()			{ _start_time = std::clock(); }
+	inline double elapsed() const		{ return double(std::clock() - _start_time) / CLOCKS_PER_SEC; }
+	inline std::clock_t elapsedl() const	{ return (std::clock() - _start_time); }
+	inline bool GetIsTimerEnd() const	{ return !isTimerStart; }
 
 	/* Positive timer */
 	inline void PosTimer(int _start, int _end /*, std::function< void(void)> isComplete, std::function< void(int)> callbackFunc */)
