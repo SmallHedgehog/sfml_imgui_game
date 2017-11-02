@@ -61,7 +61,7 @@ private:
 	ImVector<char>	IsOnline;
 
 	ImGuiTextFilter	Filter;
-	bool			ScrollToBottom;
+	bool		ScrollToBottom;
 };
 
 
@@ -78,8 +78,8 @@ public:
 		std::function< void(bool, const char*)> usersFunc);
 
 	static inline int	Stricmp(const char* str1, const char* str2)			{ int sign; while ((sign = toupper(*str2) - toupper(*str1)) == 0 && *str1){ str1++; str2++;} return sign; }
-	static inline int	Strnicmp(const char* str1, const char* str2, int n) { int sign; while (n > 0 && (sign = toupper(*str2) - toupper(*str1)) == 0 && *str1) { str1++; str2++; n--; } return sign; }
-	static inline char* Strdup(const char* str)								{ size_t len = strlen(str) + 1; void* buff = malloc(len); return (char*)memcpy(buff, (const void*)str, len); }
+	static inline int	Strnicmp(const char* str1, const char* str2, int n) 		{ int sign; while (n > 0 && (sign = toupper(*str2) - toupper(*str1)) == 0 && *str1) { str1++; str2++; n--; } return sign; }
+	static inline char* Strdup(const char* str)						{ size_t len = strlen(str) + 1; void* buff = malloc(len); return (char*)memcpy(buff, (const void*)str, len); }
 	static inline void	ParserText(std::vector<std::string>& vec, const char* text);
 
 private:
@@ -88,9 +88,9 @@ private:
 	ImVector<char>	Color;
 
 	ImGuiTextFilter	Filter;
-	bool			ScrollToBottom;
+	bool		ScrollToBottom;
 
-	UsersUISys		uUI;
+	UsersUISys	uUI;
 };
 
 //-----------------------------------------------------------------------------------------------------------------------------
@@ -138,10 +138,10 @@ public:
 	BattleUISys() :isTimerComplete(false), isTimerAComplete(false), isMatchAgree(false), isEndTimer(false) {}
 	// For matchUI
 	inline void DrawMatchUI(const char* title, std::function< void(bool, const char*)> userFunc, 
-		std::function< void(bool, const char*)> matchFunc)			{ matchUISys.Draw(title, userFunc, matchFunc); }
-	inline void AddUserOfuUI(const char isOnline, const char* user)	{ matchUISys.AddItem(isOnline, user); }
-	inline void SetItemOfuUI(const char isOnline, const char* user)	{ matchUISys.SetItemIsOnline(isOnline, user); }
-	inline void Clear()												{ matchUISys.Clear(); }
+		std::function< void(bool, const char*)> matchFunc)		{ matchUISys.Draw(title, userFunc, matchFunc); }
+	inline void AddUserOfuUI(const char isOnline, const char* user)		{ matchUISys.AddItem(isOnline, user); }
+	inline void SetItemOfuUI(const char isOnline, const char* user)		{ matchUISys.SetItemIsOnline(isOnline, user); }
+	inline void Clear()							{ matchUISys.Clear(); }
 	// For match wait UI by vClock
 	void DrawMatchWaitUI();
 	void DrawMatchAgreeUI(std::function< void(int, const char*)> matchAgreeFunc);
@@ -156,42 +156,42 @@ public:
 
 	// For matchSS
 	inline void SetMatchSS(MatchStateFlags_ msFlags, const char* _reqUser, const char* _matUser) { memset(&matchSS, 0, sizeof(matchSS)); matchSS.MSFlags = msFlags; strcpy(matchSS.ReqUser, _reqUser); strcpy(matchSS.MatUser, _matUser);}
-	inline void SetMatchSS(MatchStateFlags_ flags)	{ memset(&matchSS, 0, sizeof(matchSS)); matchSS.MSFlags = flags; }
+	inline void SetMatchSS(MatchStateFlags_ flags)		{ memset(&matchSS, 0, sizeof(matchSS)); matchSS.MSFlags = flags; }
 	inline const char* GetReqUser() const			{ return matchSS.ReqUser; }
 	inline const char* GetMatUser() const			{ return matchSS.MatUser; }
-	inline MatchStateFlags_ GetMatchState() const	{ return matchSS.MSFlags; }
-	inline void SetMatchState(MatchStateFlags_ _t)	{ matchSS.MSFlags = _t; }
-	inline void SetVClock(int _vClock)				{ std::lock_guard<std::mutex> lock(_mutex); vClock = _vClock; }
-	inline const int GetVClock() const				{ return vClock; }
+	inline MatchStateFlags_ GetMatchState() const		{ return matchSS.MSFlags; }
+	inline void SetMatchState(MatchStateFlags_ _t)		{ matchSS.MSFlags = _t; }
+	inline void SetVClock(int _vClock)			{ std::lock_guard<std::mutex> lock(_mutex); vClock = _vClock; }
+	inline const int GetVClock() const			{ return vClock; }
 	inline void SetIsTimerComplete(bool _v)			{ std::lock_guard<std::mutex> lock(_mutex); isTimerComplete = _v; }
 	inline bool GetIsTimerComplete() const			{ return isTimerComplete; }
-	inline bool EndTimer()							{ return isEndTimer; }
-	inline void SetIsEndTimer(bool _v)				{ std::lock_guard<std::mutex> lock(_mutex); isEndTimer = _v; }
+	inline bool EndTimer()					{ return isEndTimer; }
+	inline void SetIsEndTimer(bool _v)			{ std::lock_guard<std::mutex> lock(_mutex); isEndTimer = _v; }
 	inline void SetMatchATimerComplete(bool _v)		{ std::lock_guard<std::mutex> lock(_mutex); isTimerAComplete = _v; }
 
 	// For match agree UI
 	inline void SetIsMatchAgree(bool _v)			{ std::lock_guard<std::mutex> lock(_mutex); isMatchAgree = _v; }
-	inline bool GetIsMatchAgree() const				{ return isMatchAgree; }
+	inline bool GetIsMatchAgree() const			{ return isMatchAgree; }
 	inline void SetIsShowMatchAUI(bool _v)			{ std::lock_guard<std::mutex> lock(_mutex); isShowMatchAUI = _v; }
 	inline bool GetIsShowMatchAUI() const			{ return isShowMatchAUI; }
 
 private:
-	UsersUISys		matchUISys;
-	USERINFO		uInfo;
+	UsersUISys	matchUISys;
+	USERINFO	uInfo;
 	MatchStateSct	matchSS;
 
 	// For match wait UI, we will show the value of clock(from vClock to 0 step by 1)
-	int				vClock;
+	int		vClock;
 	// To sync the vClock
-	std::mutex		_mutex;
+	std::mutex	_mutex;
 	// If the match wait UI is closed, we should close the match wait UI
-	bool			isTimerComplete;
-	bool			isEndTimer;
+	bool		isTimerComplete;
+	bool		isEndTimer;
 
 	// For match agree UI
-	bool			isShowMatchAUI;
-	bool			isTimerAComplete;
-	bool			isMatchAgree;
+	bool		isShowMatchAUI;
+	bool		isTimerAComplete;
+	bool		isMatchAgree;
 	std::function< void(int, const char*)> matchWaitAgree;
 };
 
@@ -205,16 +205,16 @@ private:
 class UChat
 {
 private:
-	char			InputBuf[256];
+	char		InputBuf[256];
 	ImGuiTextFilter	Filter;
 	ImVector<char*>	Items;
 	ImVector<char*> Users;
 	ImVector<char>	Type;
-	bool			ScrollToBottom;
+	bool		ScrollToBottom;
 
 public:
-	UChat()			{ Clear(); memset(InputBuf, 0, sizeof(InputBuf)); }
-	~UChat()		{ Clear(); }
+	UChat()		{ Clear(); memset(InputBuf, 0, sizeof(InputBuf)); }
+	~UChat()	{ Clear(); }
 
 	void Clear();
 	void AddItem(char type, const char* fmt, const char* user);
@@ -241,7 +241,7 @@ public:
 
 private:
 	BattleUISys&	battleUISys;
-	UChat			chatSys;
+	UChat		chatSys;
 	
 	ImVector<CHESS> chesses;
 };
