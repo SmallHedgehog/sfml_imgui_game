@@ -8,19 +8,19 @@
 /* AI algorithm */
 
 // Score value
-#define SCORE_WIN			      100000
-#define SCORE_LIVEF			    10000
-#define SCORE_D_LIVET		    5000
-#define SCORE_DE_T_LIVE_T	  1000
-#define SCORE_D_F			      500
-#define SCORE_LOWD_F		    400
-#define SCORE_LIVE_T		    100
-#define SCORE_SKIP_LIVE_T	  90
-#define SCORE_LIVE_TWO		  10
-#define SCORE_LOW_LIVE_TWO  9
-#define SCORE_D_T			      5
-#define SCORE_D_TWO			    2
-#define SCORE_NOTHREAT		  0
+#define SCORE_WIN		 100000
+#define SCORE_LIVEF		 10000
+#define SCORE_D_LIVET		 5000
+#define SCORE_DE_T_LIVE_T	 1000
+#define SCORE_D_F		 500
+#define SCORE_LOWD_F		 400
+#define SCORE_LIVE_T		 100
+#define SCORE_SKIP_LIVE_T	 90
+#define SCORE_LIVE_TWO		 10
+#define SCORE_LOW_LIVE_TWO 	 9
+#define SCORE_D_T		 5
+#define SCORE_D_TWO		 2
+#define SCORE_NOTHREAT		 0
 
 // Chess type
 enum ChessTypeFlags_
