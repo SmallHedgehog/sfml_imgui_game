@@ -16,6 +16,52 @@ void AI::AIInit()
 	memset(MSelf, 0, sizeof(MSelf));
 }
 
+bool AI::JudgeIsWined(ChessTypeFlags_ cType, const Point& pos, char CLayout[][LINE_NUMS])
+{
+	static const Point Directions[][4] = {
+		{ { 0, -1 },{ 0, -2 },{ 0, -3 },{ 0, -4 } },
+		{ { 1, -1 },{ 2, -2 },{ 3, -3 },{ 4, -4 } },
+		{ { 1,  0 },{ 2,  0 },{ 3,  0 },{ 4,  0 } },
+		{ { 1,  1 },{ 2,  2 },{ 3,  3 },{ 4,  4 } },
+		{ { 0,  1 },{ 0,  2 },{ 0,  3 },{ 0,  4 } },
+		{ { -1, 1 },{ -2, 2 },{ -3, 3 },{ -4, 4 } },
+		{ { -1, 0 },{ -2, 0 },{ -3, 0 },{ -4, 0 } },
+		{ { -1,-1 },{ -2,-2 },{ -3,-3 },{ -4,-4 } }
+	};
+
+	for (int i = 0; i < 4; ++i)
+	{
+		int Count = 0;
+		for (int j = 0; j < 4; ++j)
+		{
+			int newXPos = pos.xPos + Directions[i][j].xPos;
+			int newYPos = pos.yPos + Directions[i][j].yPos;
+			if (newXPos < 0 || newXPos >= LINE_NUMS || newYPos < 0 || newYPos >= LINE_NUMS)
+				break;
+			if (CLayout[newXPos][newYPos] == char(cType))
+				Count++;
+			else
+				break;
+		}
+		for (int j = 0; j < 4; ++j)
+		{
+			int newXPos = pos.xPos + Directions[i + 4][j].xPos;
+			int newYPos = pos.yPos + Directions[i + 4][j].yPos;
+			if (newXPos < 0 || newXPos >= LINE_NUMS || newYPos < 0 || newYPos >= LINE_NUMS)
+				break;
+			if (CLayout[newXPos][newYPos] == char(cType))
+				Count++;
+			else
+				break;
+		}
+
+		Count++;
+		if (Count >= 5)
+			return true;
+	}
+	return false;
+}
+
 /* CLayout[i][j] == 0 stand for empty, 1 is white, 2 is black*/
 void AI::AICalc(ChessTypeFlags_ cEnemyType, ChessTypeFlags_ cNEnemyType, char CLayout[][LINE_NUMS], const Point& cPos, Point& Pos)
 {
