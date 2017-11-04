@@ -59,7 +59,7 @@ public:
 	void AICalc(ChessTypeFlags_ cEnemyType, ChessTypeFlags_ cNEnemyType, char CLayout[][LINE_NUMS], const Point& cPos, Point& Pos);
 	void AIInit();
 	
-	bool JudgeIsWined(ChessTypeFlags_ cType, const Point& pos, char CLayout[][LINE_NUMS]);
+	static bool JudgeIsWined(ChessTypeFlags_ cType, const Point& pos, char CLayout[][LINE_NUMS]);
 
 private:
 	void Calc(char CLayout[][LINE_NUMS], int ResSocre[][LINE_NUMS], ChessTypeFlags_ cMy, ChessTypeFlags_ cEnemy);
