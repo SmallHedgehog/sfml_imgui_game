@@ -3,45 +3,47 @@
 
 MsgHandle::MsgHandle()
 {
-	// 登录、注册
 	logicHandles[SIGN] = new Login();
-
+	logicHandles[CHAT] = new Chat();
 	logicHandles[USER] = new User();
 	logicHandles[FIGHT] = new Fight();
 	logicHandles[MATCH] = new Match();
 
-	// 初始化数据库连接对象
+	// 鍒濆鍖栨暟鎹簱杩炴帴瀵硅薄
 	db = DBManager::getInstance();
 	db->init("120.25.163.214", "root", "123456");
 }
 
 void MsgHandle::handleCliConn_MsgRecv(MESSAGE& _msg)
 {
-	// 消息类型
+	// message type
 	MessageType msgType = _msg.data.dataHeader.msgType;
 
 	switch (msgType)
 	{
-	case MessageType::TYPE_SIGNIN:		// 登录消息处理
+	case MessageType::TYPE_SIGNIN:		// login in
 		logicHandles[SIGN]->handleMessage(_msg.cSocket, _msg.data.data, _msg.data.dataHeader.dataSize,
 			MessageType::TYPE_SIGNIN);
 		break;
-	case MessageType::TYPE_SIGNUP:		// 注册消息处理
+	case MessageType::TYPE_SIGNUP:		// login up
 		logicHandles[SIGN]->handleMessage(_msg.cSocket, _msg.data.data, _msg.data.dataHeader.dataSize,
 			MessageType::TYPE_SIGNUP);
 		break;
-	case MessageType::TYPE_SIGNOUT:		// 登出消息处理
+	case MessageType::TYPE_SIGNOUT:		// login out
 		logicHandles[SIGN]->handleMessage(_msg.cSocket, _msg.data.data, _msg.data.dataHeader.dataSize,
 			MessageType::TYPE_SIGNOUT);
 		handleCliClose(_msg.cSocket, "");
 		break;
-	case MessageType::TYPE_USER:		// 用户消息处理
+	case MessageType::TYPE_CHAT:		// Chat messages
+		logicHandles[CHAT]->handleMessage(_msg.cSocket, _msg.data.data, _msg.data.dataHeader.dataSize);
+		break;
+	case MessageType::TYPE_USER:		// get user's infos
 		logicHandles[USER]->handleMessage(_msg.cSocket, _msg.data.data, _msg.data.dataHeader.dataSize);
 		break;
-	case MessageType::TYPE_FIGHT:		// 交战消息处理
-		logicHandles[FIGHT]->handleMessage(_msg.cSocket, _msg.data.data, _msg.data.dataHeader.dataSize);
+	case MessageType::TYPE_FIGHT:		// handle fight message
+		logicHandles[FIGHT]->handleMessage(_msg.cSocket, _msg.data.data, _msg.data.dataHeader.smsgType);
 		break;
-	case MessageType::TYPE_MATCH:		// 匹配消息处理
+	case MessageType::TYPE_MATCH:		// match message
 		logicHandles[MATCH]->handleMessage(_msg.cSocket, _msg.data.data, _msg.data.dataHeader.dataSize);
 		break;
 	default:
@@ -51,14 +53,14 @@ void MsgHandle::handleCliConn_MsgRecv(MESSAGE& _msg)
 
 void MsgHandle::handleCliClose(Socket* _clientSocket, const char* _error)
 {
-	// 客户端连接断开时，释放客户端sockets、客户端线程
+	// 瀹㈡埛绔繛鎺ユ柇寮�鏃讹紝閲婃斁瀹㈡埛绔痵ockets銆佸鎴风绾跨▼
 	releaseResource(_clientSocket);
 }
 
 void MsgHandle::releaseResource(Socket* _clientSocket)
 {
-/*必须要先删除处理客户端的线程，然后再删客户端Socket*/
-	// 删除客户端关闭时处理客户端的线程
+/*蹇呴』瑕佸厛鍒犻櫎澶勭悊瀹㈡埛绔殑绾跨▼锛岀劧鍚庡啀鍒犲鎴风Socket*/
+	// 鍒犻櫎瀹㈡埛绔叧闂椂澶勭悊瀹㈡埛绔殑绾跨▼
 	for (std::list<virtualThread*>::iterator it = Cache::cThreads.begin(); it != Cache::cThreads.end(); )
 	{
 		clientThread* cThread = dynamic_cast<clientThread*>((*it));
@@ -77,7 +79,7 @@ void MsgHandle::releaseResource(Socket* _clientSocket)
 		else
 			++it;
 	}
-	// 删除客户端关闭时的客户端Socket
+	// 鍒犻櫎瀹㈡埛绔叧闂椂鐨勫鎴风Socket
 	for (std::list<Socket*>::iterator it = Cache::cSockets.begin(); it != Cache::cSockets.end(); )
 	{
 		if (&(*(*it)) == &(*(_clientSocket)))
