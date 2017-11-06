@@ -16,6 +16,7 @@
 #include "../MultiMessageSend.h"
 
 
+
 class AbstractLogic
 {
 public:
