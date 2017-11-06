@@ -9,107 +9,152 @@ void Fight::handleMessage(Socket* _clientSocket, const char* _msg, int size,
 
 void Fight::handleMessage_fight(Socket* _clientSocket, const char* _msg, int size)
 {
-	std::cout << "用户交战信息处理" << std::endl;
+	std::cout << "handle fight message" << std::endl;
 
-	// 解析消息数据
-	std::vector<std::string> msgs;
-	parserMessage(msgs, _msg);
+	// Parser message
+	// std::vector<std::string> msgs;
+	// parserMessage(msgs, _msg);
 
-	if (msgs.size() != 5)
+	SMessageTypeFlags_ type = SMessageTypeFlags_(size);
+	switch (type)
 	{
-		if (msgs.size() == 7)	// 包含正常退出和逃跑
+	case SMessageTypeFlags_FightChatMsg:
 		{
-			// 交战结束消息，用户名+用户信息
-			std::vector<std::string> userInfos;
-			userInfos.assign(msgs.begin() + 1, msgs.end() - 1);
-			UserInfo::setUserInfo(msgs[0], userInfos);
-
-			// 缓存username->username
-			if (Cache::cUsers.find(msgs[0]) != Cache::cUsers.end())
-				Cache::cUsers.erase(msgs[0]);
-
-			DATA_PACKAGE data;
-			data.dataHeader.dataSize = sizeof(DATA_PACKAGE) - sizeof(DATA_HEADER);
-			data.dataHeader.msgType = MessageType::TYPE_FIGHT;
-			std::string sendData = msgs[0] + "_END";
-			strcpy(data.data, sendData.c_str());
-			MultiMessageSend::messageSend(Cache::cSockets, data);
-		}
-		else if (msgs.size() == 8)	// 逃跑
-		{
-			// 交战结束消息，用户名+用户信息
-			std::vector<std::string> userInfos;
-			userInfos.assign(msgs.begin() + 2, msgs.end() - 1);
-			UserInfo::setUserInfo(msgs[0], userInfos);
-
-			// 缓存username->username
-			if (Cache::cUsers.find(msgs[0]) != Cache::cUsers.end())
-				Cache::cUsers.erase(msgs[0]);
-
-			// 查找被发送方的Socket
-			Socket* respSocket = nullptr;
-			std::unordered_map<std::string, Socket*>::iterator it = Cache::cMaps.begin();
-			for (; it != Cache::cMaps.end(); ++it)
+			std::vector<std::string> msgs;
+			ParserMsg2(msgs, _msg, "_");
+			if (msgs.size() == 2)
 			{
-				if (it->first == msgs[1])
+				std::vector<std::string> tUsers;
+				ParserMsg2(tUsers, msgs[0].c_str(), "/");
+				if (tUsers.size() == 2)
 				{
-					respSocket = it->second;
-					break;
+					// Find user's Socket by the user's name
+					Socket* respSocket = nullptr;
+					std::unordered_map<std::string, Socket*>::iterator it = Cache::cMaps.begin();
+					for (; it != Cache::cMaps.end(); ++it)
+					{
+						if (it->first == tUsers[1])
+						{
+							respSocket = it->second;
+							break;
+						}
+					}
+					if (respSocket)
+					{
+						DATA_PACKAGE dPackage;
+						FilldPackage(MessageType::TYPE_FIGHT, SMessageTypeFlags_FightChatMsg, _msg, dPackage);
+
+						respSocket->write((char*)&dPackage, sizeof(dPackage));
+					}
 				}
 			}
-			if (it != Cache::cMaps.end())
+		}
+		break;
+	case SMessageTypeFlags_FightChessPosMsg:
+		{
+			std::vector<std::string> msgs;
+			parserMessage(msgs, _msg);
+			if (msgs.size() == 4)
 			{
-				// 向被发送方写入消息
-				DATA_PACKAGE dPackage;
-				dPackage.dataHeader.dataSize = sizeof(DATA_PACKAGE) - sizeof(DATA_HEADER);
-				dPackage.dataHeader.msgType = MessageType::TYPE_FIGHT;
-				std::string send_data = msgs[0] + "_RUN";
-				strcpy(dPackage.data, send_data.c_str());
+				Socket* respSocket = nullptr;
+				std::unordered_map<std::string, Socket*>::iterator it = Cache::cMaps.begin();
+				for (; it != Cache::cMaps.end(); ++it)
+				{
+					if (it->first == msgs[1])
+					{
+						respSocket = it->second;
+						break;
+					}
+				}
 				if (respSocket)
-					respSocket->write((char*)&dPackage, sizeof(DATA_PACKAGE));
-			}
+				{
+					DATA_PACKAGE dPackage;
+					FilldPackage(MessageType::TYPE_FIGHT, SMessageTypeFlags_FightChessPosMsg, _msg, dPackage);
 
-			DATA_PACKAGE data;
-			data.dataHeader.dataSize = sizeof(DATA_PACKAGE) - sizeof(DATA_HEADER);
-			data.dataHeader.msgType = MessageType::TYPE_FIGHT;
-			std::string sendData = msgs[0] + "_END";
-			strcpy(data.data, sendData.c_str());
-			MultiMessageSend::messageSend(Cache::cSockets, data);
-		}
-	}
-	else
-	{
-		// 查找被发送方的Socket
-		Socket* respSocket = nullptr;
-		std::unordered_map<std::string, Socket*>::iterator it = Cache::cMaps.begin();
-		for (; it != Cache::cMaps.end(); ++it)
-		{
-			if (it->first == msgs[1])
-			{
-				respSocket = it->second;
-				break;
+					respSocket->write((char*)&dPackage, sizeof(dPackage));
+				}
 			}
 		}
-		if (it != Cache::cMaps.end())
+		break;
+	case SMessageTypeFlags_FightExitMsg:
 		{
-			// 向被发送方写入消息
-			DATA_PACKAGE dPackage;
-			dPackage.dataHeader.dataSize = sizeof(DATA_PACKAGE) - sizeof(DATA_HEADER);
-			dPackage.dataHeader.msgType = MessageType::TYPE_FIGHT;
-			strcpy(dPackage.data, _msg);
-			if (respSocket)
-				respSocket->write((char*)&dPackage, sizeof(DATA_PACKAGE));
+			std::vector<std::string> msgs;
+			parserMessage(msgs, _msg);
+			if (msgs.size() == 2)
+			{
+				Socket* respSocket = nullptr;
+				std::unordered_map<std::string, Socket*>::iterator it = Cache::cMaps.begin();
+				for (; it != Cache::cMaps.end(); ++it)
+				{
+					if (it->first == msgs[1])
+					{
+						respSocket = it->second;
+						break;
+					}
+				}
+				if (respSocket)
+				{
+					DATA_PACKAGE dPackage;
+					FilldPackage(MessageType::TYPE_FIGHT, SMessageTypeFlags_FightExitMsg, _msg, dPackage);
+
+					respSocket->write((char*)&dPackage, sizeof(dPackage));
+				}
+
+				// Find users whether in fightUsers
+				std::unordered_map<std::string, std::string>::iterator item = Cache::fightUsers.find(msgs[0]);
+				if (item != Cache::fightUsers.end())
+				{
+					// Update databae table of UserInfo
+					Cache::fightUsers.erase(msgs[0]);
+					Cache::fightUsers.erase(msgs[1]);
+				}
+
+				// Bordcast all online users
+				DATA_PACKAGE notify_data;
+				std::string sendData = msgs[0] + "_" + msgs[1];
+				FilldPackage(MessageType::TYPE_FIGHT, SMessageTypeFlags_FightUserToOnline, sendData.c_str(), notify_data);
+				MultiMessageSend::messageSend(Cache::cSockets, notify_data);
+			}
 		}
-		else
+		break;
+	case SMessageTypeFlags_FightVictory:
 		{
-			// 查找失败，向发送方写入失败消息
-			DATA_PACKAGE data;
-			data.dataHeader.dataSize = sizeof(DATA_PACKAGE) - sizeof(DATA_HEADER);
-			data.dataHeader.msgType = MessageType::TYPE_FIGHT;
-			std::string sendData = msgs[0] + "_" + msgs[1] + "_FAIL";
-			strcpy(data.data, sendData.c_str());
-			if (_clientSocket)
-				_clientSocket->write((char*)&data, sizeof(DATA_PACKAGE));
+			std::vector<std::string> msgs;
+			parserMessage(msgs, _msg);
+			if (msgs.size() == 2)
+			{
+				// Update databae table of UserInfo
+				Cache::fightUsers.erase(msgs[0]);
+				Cache::fightUsers.erase(msgs[1]);
+			}
 		}
+		break;
+	case SMessageTypeFlags_FightFailure:
+		{
+			std::vector<std::string> msgs;
+			parserMessage(msgs, _msg);
+			if (msgs.size() == 2)
+			{
+				// Update databae table of UserInfo
+				Cache::fightUsers.erase(msgs[0]);
+				Cache::fightUsers.erase(msgs[1]);
+			}
+		}
+		break;
 	}
+}
+
+void Fight::ParserMsg2(std::vector<std::string>& _vals, const char* _msg, const char* delim)
+{
+	std::string info(_msg);
+
+	size_t last = 0;
+	size_t index = info.find_first_of(delim, last);
+	if (index == std::string::npos)
+	{
+		_vals.push_back(info);
+		return;
+	}
+	_vals.push_back(info.substr(last, index - last));
+	_vals.push_back(info.substr(index + 1, info.size() - (index + 1)));
 }
