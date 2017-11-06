@@ -1,7 +1,7 @@
 #pragma once
 
 /*
-ÓÃ»§½»Õ½Âß¼­´¦Àí
+ç”¨æˆ·äº¤æˆ˜é€»è¾‘å¤„ç†
 */
 
 #include "AbstractLogic.h"
@@ -13,10 +13,11 @@
 class Fight : public AbstractLogic
 {
 public:
-	// Âß¼­´¦Àí£¬ÓÃ»§½»Õ½
+	// é€»è¾‘å¤„ç†ï¼Œç”¨æˆ·äº¤æˆ˜
 	void handleMessage(Socket* _clientSocket, const char* _msg, int size,
 		MessageType _msgType = MessageType::TYPE_NONE);
 
 private:
 	void handleMessage_fight(Socket* _clientSocket, const char* _msg, int size);
+	void ParserMsg2(std::vector<std::string>& _vals, const char* _msg, const char* delim);
 };
