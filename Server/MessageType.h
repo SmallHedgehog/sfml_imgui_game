@@ -45,7 +45,7 @@ enum SMessageTypeFlags_
 /* Message package header */
 typedef struct data_header
 {
-	MessageType			msgType;		// Message type of the first protocol
+	MessageType		msgType;			// Message type of the first protocol
 	SMessageTypeFlags_	smsgType;
 	unsigned int		dataSize;			// The real message data length in message package
 }DATA_HEADER;
@@ -54,7 +54,7 @@ typedef struct data_header
 typedef struct data_package
 {
 	DATA_HEADER dataHeader;					// Message package header
-	char		data[MAX_DATA_SIZE];			// The real message data
+	char	data[MAX_DATA_SIZE];				// The real message data
 
 	data_package& operator = (const data_package& _data)
 	{
@@ -72,7 +72,7 @@ typedef struct data_package
 /* Fill the message package */
 static inline void FilldPackage(const MessageType _type, const char* _msg, DATA_PACKAGE& dPackage)
 {
-	dPackage.dataHeader.msgType	 = _type;
+	dPackage.dataHeader.msgType = _type;
 	dPackage.dataHeader.dataSize = sizeof(dPackage) - sizeof(DATA_HEADER);
 
 	memset(dPackage.data, 0, sizeof(dPackage.data));
