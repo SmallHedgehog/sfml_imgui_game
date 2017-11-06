@@ -7,15 +7,15 @@ void Login::handleMessage(Socket* _clientSocket, const char* _msg, int size,
 	switch (_msgType)
 	{
 	case TYPE_SIGNIN:
-		// 登录逻辑处理
+		// signin
 		handleMessage_signin(_clientSocket, _msg, size);
 		break;
 	case TYPE_SIGNUP:
-		// 注册逻辑处理
+		// signup
 		handleMessage_signup(_clientSocket, _msg, size);
 		break;
 	case TYPE_SIGNOUT:
-		// 登出逻辑处理
+		// signout
 		handleMessage_signout(_clientSocket, _msg, size);
 		break;
 	default:
@@ -25,21 +25,26 @@ void Login::handleMessage(Socket* _clientSocket, const char* _msg, int size,
 
 void Login::handleMessage_signout(Socket* _clientSocket, const char* _msg, int Size)
 {
-	std::cout << "登出消息类型处理" << std::endl;
+	std::cout << "handle signout message" << std::endl;
 
 	if (_clientSocket)
 	{
-		// 解析消息
+		// Parser message
 		std::vector<std::string> msgs;
 		parserMessage(msgs, _msg);
 
-		if (msgs.empty())
+		// Uncache in onlineUsers
+		if (!msgs.empty())
 		{
-			return;
+			std::unordered_set<std::string>::iterator it = Cache::onlineUsers.find(msgs[0]);
+			if (it != Cache::onlineUsers.end())
+				Cache::onlineUsers.erase(it);
 		}
-		else
+
+		int msgsSize = msgs.size();
+		if (msgsSize == 1)
 		{
-			if (msgs[0] == "NONE")
+			if (msgs[0] == "NONE")	/* abnormal signout message */
 			{
 				bool isFind = false;
 				std::unordered_map<std::string, Socket*>::iterator it;
@@ -57,31 +62,85 @@ void Login::handleMessage_signout(Socket* _clientSocket, const char* _msg, int S
 						++it;
 				}
 				if (it == Cache::cMaps.end() && !isFind)
-				{
 					return;
-				}
 			}
 		}
-		// 更新用户在线信息
+		else if (msgsSize == 2)		/* normal signout message */
+		{
+			std::unordered_map<std::string, Socket*>::iterator it;
+			for (it = Cache::cMaps.begin(); it != Cache::cMaps.end();)
+			{
+				if (msgs[0] == it->first)
+				{
+					it = Cache::cMaps.erase(it);
+					break;
+				}
+				else
+					++it;
+			}
+		}
+		// Update the user's online infos
 		UserLogin::updateUserOnlineRecord(msgs[0], 0);	// 0 stand for the user isn't online
-		// 通知所有在线用户
+		// Uncache this user in onlineUsers
+		std::unordered_set<std::string>::iterator it = Cache::onlineUsers.find(msgs[0]);
+		if (it != Cache::onlineUsers.end())
+			Cache::onlineUsers.erase(it);
+		// Uncache users in isForMatchU
+		it = Cache::isForMatchU.find(msgs[0]);
+		if (it != Cache::isForMatchU.end())
+			Cache::isForMatchU.erase(it);
+
+		// This user is fighting, find the match user
+		std::unordered_map<std::string, std::string>::iterator item = Cache::fightUsers.find(msgs[0]);
+		if (item != Cache::fightUsers.end())
+		{
+			Socket* respSocket = nullptr;
+			std::unordered_map<std::string, Socket*>::iterator userS = Cache::cMaps.begin();
+			for (; userS != Cache::cMaps.end(); ++userS)
+			{
+				if (userS->first == item->second)
+				{
+					respSocket = userS->second;
+					break;
+				}
+			}
+			if (respSocket)
+			{
+				DATA_PACKAGE dPackage;
+				std::string text = msgs[0] + "_" + item->second;
+				FilldPackage(MessageType::TYPE_FIGHT, SMessageTypeFlags_FightExitMsg, text.c_str(), dPackage);
+
+				respSocket->write((char*)&dPackage, sizeof(dPackage));
+			}
+
+			// Update databae table of UserInfo
+			std::string MatchedUser = item->second;
+			Cache::fightUsers.erase(msgs[0]);
+			Cache::fightUsers.erase(MatchedUser);
+
+			// Bordcast all online users
+			DATA_PACKAGE notify_data;
+			std::string sendData = msgs[0] + "_" + MatchedUser;
+			FilldPackage(MessageType::TYPE_FIGHT, SMessageTypeFlags_FightUserToOnline, sendData.c_str(), notify_data);
+			MultiMessageSend::messageSend(Cache::cSockets, notify_data);
+		}
+
+		// Bordcast all online users
 		DATA_PACKAGE notify_data;
-		notify_data.dataHeader.dataSize = sizeof(notify_data) - sizeof(DATA_HEADER);
-		notify_data.dataHeader.msgType = MessageType::TYPE_SIGNOUT;
-		strcpy(notify_data.data, msgs[0].c_str());
+		FilldPackage(MessageType::TYPE_SIGNOUT, SMessageTypeFlags_NIsTheUserSingout, msgs[0].c_str(), notify_data);
 		MultiMessageSend::messageSend(Cache::cSockets, _clientSocket, notify_data);
 	}
 }
 
 void Login::handleMessage_signin(Socket* _clientSocket, const char* _msg, int size)
 {
-	std::cout << "登录消息类型处理" << std::endl;
+	std::cout << "handle signin message" << std::endl;
 
 	DATA_PACKAGE dPackage;
 	dPackage.dataHeader.dataSize = sizeof(dPackage) - sizeof(DATA_HEADER);
 	dPackage.dataHeader.msgType = MessageType::TYPE_SIGNIN;
 
-	// 解析消息
+	// Parser message
 	std::vector<std::string> msgs;
 	parserMessage(msgs, _msg);
 	if (msgs.size() != 2)
@@ -90,39 +149,49 @@ void Login::handleMessage_signin(Socket* _clientSocket, const char* _msg, int si
 	}
 	else
 	{
-		// 在数据库中查询是否有该用户
+		// Query this user in database
 		std::string passwd;
 		if (UserLogin::userIsExistsAndGetPasswd(msgs[0], passwd))
 		{
-			// 用户查询成功，需要验证用户密码
+			// Need to valitate this user's password
 			if (passwd == msgs[1])
 			{
-				std::cout << "用户登录，验证用户名、密码成功" << std::endl;
-				strcpy(dPackage.data, "SUCCESS_NONE");
-				
-				// 更新用户在线信息
-				UserLogin::updateUserOnlineRecord(msgs[0], 1);	// 1 stand for the user is online
-				
-				// 缓存username->cSocket
-				Cache::cMaps[msgs[0]] = _clientSocket;
+				// Query this user whether have signin
+				if (Cache::onlineUsers.find(msgs[0]) != Cache::onlineUsers.end())
+				{
+					std::cout << "this user have signined" << std::endl;
+					strcpy(dPackage.data, "REPEAT_You have signined in other place!");
+				}
+				else
+				{
+					std::cout << "signin successfully" << std::endl;
+					strcpy(dPackage.data, "SUCCESS_NONE");
 
-				// 通知所有在线用户
-				DATA_PACKAGE notify_data;
-				notify_data.dataHeader.dataSize = sizeof(notify_data) - sizeof(DATA_HEADER);
-				notify_data.dataHeader.msgType = MessageType::TYPE_SIGNIN;
-				std::string sendData = msgs[0] + "_NONE";
-				strcpy(notify_data.data, sendData.c_str());
-				MultiMessageSend::messageSend(Cache::cSockets, _clientSocket, notify_data);
+					// Update the user's online infos
+					UserLogin::updateUserOnlineRecord(msgs[0], 1);	// 1 stand for the user is online
+
+					// Cache username->cSocket
+					Cache::cMaps[msgs[0]] = _clientSocket;
+
+					// Cache in onlineUsers
+					Cache::onlineUsers.insert(msgs[0]);
+
+					// Bordcast all online users
+					DATA_PACKAGE notify_data;
+					std::string sendData = msgs[0];
+					FilldPackage(MessageType::TYPE_SIGNIN, sendData.c_str(), notify_data);
+					MultiMessageSend::messageSend(Cache::cSockets, _clientSocket, notify_data);
+				}
 			}
 			else
 			{
-				std::cout << "用户登录，验证密码失败" << std::endl;
+				std::cout << "valitate the user's password error" << std::endl;
 				strcpy(dPackage.data, "PASSWORD_User's password error!");
 			}
 		}
 		else
 		{
-			std::cout << "用户登录，查找用户名失败" << std::endl;
+			std::cout << "find the user's username error" << std::endl;
 			strcpy(dPackage.data, "USERNAME_User's username error!");
 		}
 	}
@@ -133,19 +202,19 @@ void Login::handleMessage_signin(Socket* _clientSocket, const char* _msg, int si
 
 void Login::handleMessage_signup(Socket* _clientSocket, const char* _mgs, int size)
 {
-	// 注册消息类型处理
-	std::cout << "注册消息类型处理" << std::endl;
+	std::cout << "handle signup message" << std::endl;
 	
-	/* 查询数据库中是否已有该用户
-	   如果没有该用户，则向数据库中插入一条用户信息
-	   向注册对象发送注册成功或失败的消息
+	/*
+		First, validate the user have already exits, if not, turn step second.
+		Second, insert user's infos into database.
+		Third,	send message to the user
 	*/
-	// 解析发送过来的消息
 
 	DATA_PACKAGE dPackage;
 	dPackage.dataHeader.dataSize = sizeof(dPackage) - sizeof(DATA_HEADER);
 	dPackage.dataHeader.msgType = MessageType::TYPE_SIGNUP;
 
+	// Parser message
 	std::vector<std::string> msgs;
 	parserMessage(msgs, _mgs);
 	if (msgs.size() != 2)
@@ -154,30 +223,34 @@ void Login::handleMessage_signup(Socket* _clientSocket, const char* _mgs, int si
 	}
 	else
 	{
-		// 在数据库中查询是否有该用户
+		// Query this user in databases
 		bool isFind = UserLogin::userIsExists(msgs[0]);
 		if (isFind)
 		{
-			std::cout << "EXISTS" << std::endl;
-			// 向注册对象发送注册失败消息
-			strcpy(dPackage.data, "EXISTS_THE USER HAVE EXSIT!");
+			std::cout << "this user is EXISTS" << std::endl;
+			// send message to this user about signup infos
+			strcpy(dPackage.data, "EXISTS_[error] this user have exists!");
 		}
 		else
 		{
 			if (UserLogin::insertUserRecord(msgs[0], msgs[1]))
 			{
-				std::cout << "SUCCESS" << std::endl;
-				// 向注册对象发送注册成功消息
-				strcpy(dPackage.data, "SUCCESS_NONE");
-				// 向用户在线信息表中插入一条用户在线信息
+				std::cout << "this user signup SUCCESS" << std::endl;
+				strcpy(dPackage.data, "SUCCESS_User signup successfully, now you can signin!");
+				// insert a record in UserDataOnline
 				UserLogin::insertUserOnlineRecord(msgs[0]);
-				// 向用户信息表中插入一条记录
+				// insert a record in UserInfo
 				UserInfo::setUserInfo(msgs[0]);
+
+				// Bordcast (notify have user signup)
+				DATA_PACKAGE notify_data;
+				FilldPackage(MessageType::TYPE_SIGNUP, msgs[0].c_str(), notify_data);
+				MultiMessageSend::messageSend(Cache::cSockets, _clientSocket, notify_data);
 			}
 			else
 			{
-				std::cout << "FAILD" << std::endl;
-				// 向注册对象发送注册失败消息
+				std::cout << "this user signup FAILD" << std::endl;
+				// send message to this user about signup infos
 				strcpy(dPackage.data, "UNKNOWN_INSERT USER'S DATA ERROR!");
 			}
 		}
