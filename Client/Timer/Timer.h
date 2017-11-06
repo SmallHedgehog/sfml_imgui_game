@@ -4,6 +4,7 @@
 // #include <time.h>
 #include <ctime>
 #include <functional>
+#include <mutex>
 #include <thread>
 
 
@@ -11,15 +12,19 @@ class Timer
 {
 public:
 	Timer(std::function< void(bool)> _isComplete, std::function< void(int)> _callbackFunc):isTimerStart(false)
-						{ isComplete = _isComplete; callbackFunc = _callbackFunc; _start_time = std::clock(); }
-	~Timer()				{ Join(); }
-	inline double elapsed_min() const	{ return double(1) / double(CLOCKS_PER_SEC); }
-	inline double elapsed_max() const	{ return (double((std::numeric_limits<std::clock_t>::max)()) - double(_start_time)) / double(CLOCKS_PER_SEC); }
-	/* inline void start()			{ _start_time = std::clock(); } */
-	inline void restart()			{ _start_time = std::clock(); }
-	inline double elapsed() const		{ return double(std::clock() - _start_time) / CLOCKS_PER_SEC; }
-	inline std::clock_t elapsedl() const	{ return (std::clock() - _start_time); }
-	inline bool GetIsTimerEnd() const	{ return !isTimerStart; }
+										 { isComplete = _isComplete; callbackFunc = _callbackFunc; _start_time = std::clock(); }
+	Timer(std::function< void(bool)> _isComplete, std::function< void(int)> _callbackFunc, std::function< bool(void)> _endTimer): isTimerStart(false)
+										 { isComplete = _isComplete; callbackFunc = _callbackFunc; endTimer = _endTimer; _start_time = std::clock();}
+	
+	~Timer()				 { Join(); }
+	inline double elapsed_min() const	 { return double(1) / double(CLOCKS_PER_SEC); }
+	inline double elapsed_max() const	 { return (double((std::numeric_limits<std::clock_t>::max)()) - double(_start_time)) / double(CLOCKS_PER_SEC); }
+	/* inline void start()			 { _start_time = std::clock(); } */
+	inline void restart()			 { _start_time = std::clock(); }
+	inline double elapsed() const		 { return double(std::clock() - _start_time) / CLOCKS_PER_SEC; }
+	inline std::clock_t elapsedl() const 	 { return (std::clock() - _start_time); }
+	inline bool GetIsTimerEnd() const	 { return !isTimerStart; }
+	inline void SetTimerEnd(bool _v)	 { std::lock_guard<std::mutex> lock(_mutex); isTimerStart = !_v; }
 
 	/* Positive timer */
 	inline void PosTimer(int _start, int _end /*, std::function< void(void)> isComplete, std::function< void(int)> callbackFunc */)
@@ -33,6 +38,11 @@ public:
 		isTimerStart = true;
 		while (true)
 		{
+			if (endTimer())
+			{
+				isTimerStart = false;
+				break;
+			}
 			callbackFunc(start);
 			if (start >= end)
 			{
@@ -62,6 +72,11 @@ public:
 		isTimerStart = true;
 		while (true)
 		{
+			if (endTimer())
+			{
+				isTimerStart = false;
+				break;
+			}
 			callbackFunc(start);
 			if (start <= end)
 			{
@@ -93,6 +108,7 @@ public:
 	{
 		restart();
 		_t = std::thread(&Timer::PosTimer, this, start, end);
+		_t.detach();
 	}
 
 	inline void Join()
@@ -109,6 +125,8 @@ private:
 	std::clock_t _start_time;
 	std::function< void(bool)>	isComplete;
 	std::function< void(int)>	callbackFunc;
+	std::function< bool(void)>	endTimer;
 
 	std::thread _t;
+	std::mutex _mutex;
 };
