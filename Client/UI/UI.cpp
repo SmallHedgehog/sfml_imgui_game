@@ -1322,8 +1322,16 @@ void FightUISys::DrawFightUserToMachineUI(std::function< void(unsigned char, con
 		{
 			static AI ai;
 			Point pos;
-			ai.AICalc(ChessTypeFlags_White, ChessTypeFlags_Black, cLayout, Point((chesses.back().cPos.x - BLINE_LEFT_X) / LINE_SPACE,
-				(chesses.back().cPos.y - BLINE_UP_Y) / LINE_SPACE), pos);
+			if (countChess == 0)
+			{
+				pos.xPos = LINE_NUMS / 2;
+				pos.yPos = LINE_NUMS / 2;
+			}
+			else
+			{
+				ai.AICalc(cEnemyType, cMyselfType, cLayout, Point((chesses.back().cPos.x - BLINE_LEFT_X) / LINE_SPACE,
+					(chesses.back().cPos.y - BLINE_UP_Y) / LINE_SPACE), pos);
+			}
 			AddChess(CHESS(2, ImVec2(BLINE_LEFT_X + pos.xPos * LINE_SPACE, BLINE_UP_Y + pos.yPos * LINE_SPACE)));
 			cLayout[pos.xPos][pos.yPos] = 2;
 			AddChessCount();
@@ -1467,8 +1475,16 @@ void FightUISys::IsTimerComplete(bool _v)
 	{
 		static AI ai;
 		Point pos;
-		ai.AICalc(ChessTypeFlags_Black, ChessTypeFlags_White, cLayout, Point((chesses.back().cPos.x - BLINE_LEFT_X) / LINE_SPACE,
-			(chesses.back().cPos.y - BLINE_UP_Y) / LINE_SPACE), pos);
+		if (countChess == 0)
+		{
+			pos.xPos = LINE_NUMS / 2;
+			pos.yPos = LINE_NUMS / 2;
+		}
+		else
+		{
+			ai.AICalc(cEnemyType, cMyselfType, cLayout, Point((chesses.back().cPos.x - BLINE_LEFT_X) / LINE_SPACE,
+				(chesses.back().cPos.y - BLINE_UP_Y) / LINE_SPACE), pos);
+		}
 		AddChess(CHESS(1, ImVec2(BLINE_LEFT_X + pos.xPos * LINE_SPACE, BLINE_UP_Y + pos.yPos * LINE_SPACE)));
 		cLayout[pos.xPos][pos.yPos] = 1;
 		AddChessCount();
@@ -1484,8 +1500,16 @@ void FightUISys::IsTimerCompleteUU(bool _v)
 	{
 		static AI ai;
 		Point pos;
-		ai.AICalc(cEnemyType, cMyselfType, cLayout, Point((chesses.back().cPos.x - BLINE_LEFT_X) / LINE_SPACE,
-			(chesses.back().cPos.y - BLINE_UP_Y) / LINE_SPACE), pos);
+		if (countChess == 0)
+		{
+			pos.xPos = LINE_NUMS / 2;
+			pos.yPos = LINE_NUMS / 2;
+		}
+		else
+		{
+			ai.AICalc(cEnemyType, cMyselfType, cLayout, Point((chesses.back().cPos.x - BLINE_LEFT_X) / LINE_SPACE,
+				(chesses.back().cPos.y - BLINE_UP_Y) / LINE_SPACE), pos);
+		}
 		std::stringstream str;
 		str << pos.xPos << "_" << pos.yPos;
 		fightFunc(3, str.str().c_str());
